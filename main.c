@@ -18,10 +18,13 @@ typedef struct
 static Cell snake[MAX_SNAKE_SIZE];
 static int snakeLen = 0;
 static int dirX = 1, dirY = 0;
+static int nextDirX = 1, nextDirY = 0;
 static Cell food;
 static bool gameOver = false;
 static bool paused = false;
 static int score = 0;
+static int mult = 1;
+static int key = 0;
 
 static void SpawnFood(void)
 {
@@ -49,6 +52,7 @@ static void SpawnFood(void)
 static void ResetGame(void)
 {
 	snakeLen = 4;
+	mult = 1;
 	int midX = COLS / 2;
 	int midY = ROWS / 2;
 	for (int i = 0; i < snakeLen; i++)
@@ -58,6 +62,8 @@ static void ResetGame(void)
 	}
 	dirX = 1;
 	dirY = 0;
+	nextDirX = 1;
+	nextDirY = 0;
 	score = 0;
 	gameOver = false;
 	paused = false;
@@ -85,7 +91,7 @@ int main(void)
 
 	ResetGame();
 
-	const float updatesPerSecond = 10.0f; // snake speed
+	const float updatesPerSecond = 15.0f; // snake speed
 	const float secondsPerUpdate = 1.0f / updatesPerSecond;
 	float accumulator = 0.0f;
 
@@ -93,28 +99,30 @@ int main(void)
 	{
 		float dt = GetFrameTime();
 
-		if (IsKeyPressed(KEY_RIGHT) && !(dirX == -1 && dirY == 0))
+		key = GetKeyPressed();
+
+		if ((key == KEY_D || key == KEY_RIGHT) && !(dirX == -1 && dirY == 0))
 		{
-			dirX = 1;
-			dirY = 0;
+			nextDirX = 1;
+			nextDirY = 0;
 		}
 
-		if (IsKeyPressed(KEY_LEFT) && !(dirX == 1 && dirY == 0))
+		if ((key == KEY_A || key == KEY_LEFT) && !(dirX == 1 && dirY == 0))
 		{
-			dirX = -1;
-			dirY = 0;
+			nextDirX = -1;
+			nextDirY = 0;
 		}
 
-		if (IsKeyPressed(KEY_UP) && !(dirX == 0 && dirY == 1))
+		if ((key == KEY_W || key == KEY_UP) && !(dirX == 0 && dirY == 1))
 		{
-			dirX = 0;
-			dirY = -1;
+			nextDirX = 0;
+			nextDirY = -1;
 		}
 
-		if (IsKeyPressed(KEY_DOWN) && !(dirX == 0 && dirY == -1))
+		if ((key == KEY_S || key == KEY_DOWN) && !(dirX == 0 && dirY == -1))
 		{
-			dirX = 0;
-			dirY = 1;
+			nextDirX = 0;
+			nextDirY = 1;
 		}
 
 		if (IsKeyPressed(KEY_P))
@@ -133,6 +141,9 @@ int main(void)
 			while (accumulator >= secondsPerUpdate)
 			{
 				accumulator -= secondsPerUpdate;
+
+				dirX = nextDirX;
+				dirY = nextDirY;
 
 				int newX = snake[0].x + dirX;
 				int newY = snake[0].y + dirY;
@@ -167,8 +178,9 @@ int main(void)
 					{
 						snakeLen = MAX_SNAKE_SIZE;
 					}
-					score += 10;
+					score += 10 * mult;
 					SpawnFood();
+					mult++;
 				}
 			}
 		}
@@ -178,12 +190,12 @@ int main(void)
 
 		for (int x = 0; x < COLS; x++)
 		{
-			DrawLine(x * CELL_SIZE, 0, x * CELL_SIZE, SCREEN_H, (Color){ 200, 122, 255, 125 });
+			DrawLine(x * CELL_SIZE, 0, x * CELL_SIZE, SCREEN_H, (Color){200, 122, 255, 125});
 		}
 
 		for (int y = 0; y < ROWS; y++)
 		{
-			DrawLine(0, y * CELL_SIZE, SCREEN_W, y * CELL_SIZE, (Color){ 200, 122, 255, 125 });
+			DrawLine(0, y * CELL_SIZE, SCREEN_W, y * CELL_SIZE, (Color){200, 122, 255, 125});
 		}
 
 		// Draw food
